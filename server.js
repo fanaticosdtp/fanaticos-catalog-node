@@ -9,6 +9,6 @@ app.get('/categories', (req, res) => {
   res.status(200).send(doc)
 })
 
-http.createServer(app).listen(8001, () => {
-  console.log('Server started at http://localhost:8001');
+http.createServer(app).listen(8080, () => {
+  console.log('Server started at http://localhost:8080');
 });
