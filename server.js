@@ -1,9 +1,6 @@
 let express = require('express')
 let http = require('http')
 let app = express()
-// Get the adodb module
-const ADODB = require('node-adodb');
-const connection = ADODB.open('Provider=Microsoft.Jet.OLEDB.4.0;Data Source=data/Fanaticos1.mdb;');
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -19,21 +16,6 @@ app.use((req, res, next) => {
         res.send();
     });
 });
-
-app.get('/catalog/categories/access', (req, res) => {
-
-  connection
-    .query('SELECT * FROM Categorias')
-    .then(data => {
-      console.log(JSON.stringify(data, null, 2));
-    })
-    .catch(error => {
-      console.error(error);
-    });
-
-res.status(200).send("ok")
-
-})
 
 app.get('/catalog/categories', (req, res) => {
   let parser = require('simple-excel-to-json');
