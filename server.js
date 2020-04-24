@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 
 app.get('/catalog/categories', (req, res) => {
   let parser = require('simple-excel-to-json');
-  let doc = parser.parseXls2Json('data/Categorias.xlsx', { isNested: true })[0];
+  let doc = parser.parseXls2Json('data/Categorias.xlsx', { isNested: true })[0].filter( (task) => task.Id != "" );
   res.status(200).send(doc)
 })
 
