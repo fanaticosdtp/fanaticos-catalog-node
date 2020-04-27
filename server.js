@@ -29,8 +29,89 @@ app.use((req, res, next) => {
 
 app.get('/catalog/categories', (req, res) => {
   let parser = require('simple-excel-to-json');
-  let doc = parser.parseXls2Json('data/Categorias.xlsx', { isNested: true })[0].filter( (task) => task.Id != "" );
-  res.status(200).send(doc)
+
+  let cat = parser.parseXls2Json('data/Categorias.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
+
+  let tip = parser.parseXls2Json('data/Varios.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
+
+  cat.filter( (item) => item.IdTipo != "" ).forEach( (item) => item.IdTipo = tip.find(element => item.IdTipo === element.Id) );
+
+  res.status(200).send(cat)
+})
+
+app.get('/catalog/products/:categoryId', (req, res) => {
+
+  const categoryId = req.params.categoryId;
+
+  let parser = require('simple-excel-to-json');
+
+  let prod = parser.parseXls2Json('data/Productos.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" ).filter( (item) => item.IdCat == categoryId );
+
+  let stock = parser.parseXls2Json('data/Stock.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
+
+  let some = parser.parseXls2Json('data/Varios.xlsx', { isNested: true });
+
+  let teams = some[1].filter( (row) => row.Id != "" );
+
+  let size = some[2].filter( (row) => row.Id != "" );
+
+  stock.filter( (item) => item.IdTalle != "" ).forEach( (item) => item.IdTalle = size.find(element => item.IdTalle === element.Id) )
+
+  prod.filter( (item) => item.IdEq != "" ).forEach( (item) => item.IdEq = teams.find(element => item.IdEq === element.Id) );
+
+  prod.forEach( (item) => {
+    item.IdStock = stock.filter(element => item.Id === element.IdProd);
+    item.Disponible = item.IdStock.filter( element => element.Cantidad > 0).length > 0;
+  });
+
+  res.status(200).send(prod)
+})
+
+app.get('/catalog/product/:productId', (req, res) => {
+
+  const productId = req.params.productId;
+
+  let parser = require('simple-excel-to-json');
+
+  let prod = parser.parseXls2Json('data/Productos.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" ).filter( (item) => item.Id == productId )[0];
+
+  let stock = parser.parseXls2Json('data/Stock.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
+
+  let some = parser.parseXls2Json('data/Varios.xlsx', { isNested: true });
+
+  let teams = some[1].filter( (row) => row.Id != "" );
+
+  let size = some[2].filter( (row) => row.Id != "" );
+
+  prod.IdEq = teams.find(element => prod.IdEq === element.Id);
+
+  prod.IdStock = stock.filter(element => prod.Id === element.IdProd);
+
+  prod.IdStock.forEach( (item) => {
+    item.IdTalle = size.find(element => item.IdTalle === element.Id);
+    if(!item.IdTalle){
+      item.IdTalle = new Object();
+      item.IdTalle.Id = 99999;
+      item.IdTalle.Nombre = "Talle único";
+    }
+  });
+
+  if(prod.IdStock)
+
+  res.status(200).send(prod);
+
+})
+
+app.get('/catalog/teams', (req, res) => {
+
+  const productId = req.params.productId;
+
+  let parser = require('simple-excel-to-json');
+
+  let teams = parser.parseXls2Json('data/Varios.xlsx', { isNested: true })[1].filter( (row) => row.Id != "" );
+
+  res.status(200).send(teams);
+
 })
 
 http.createServer(app).listen(8080, () => {
@@ -97,22 +178,40 @@ function getAccessToken(oAuth2Client, callback) {
 }
 
 function downloadFiles(auth) {
-  var fileId = '1Wpqj_LknYvR5S3sIGCWkQsWgv_1FV5aI';
-  var dest = fs.createWriteStream('data/Categorias.xlsx');
-  const drive = google.drive({version: 'v3', auth});
-  drive.files.get({
-    fileId: fileId,
-    alt: 'media'
-  }, {responseType: 'stream'},
-    function(err, res){
-        res.data
-        .on('end', () => {
-            console.log('Done');
-        })
-        .on('error', err => {
-            console.log('Error', err);
-        })
-        .pipe(dest);
-    }
-);
+
+  let prod = new Object();
+    prod.id = '1Ur0S8n8pApJ6SxhjsM5LFtKU3IL-TD6x';
+    prod.name = 'data/Productos.xlsx';
+  let cate = new Object();
+    cate.id = '1Wpqj_LknYvR5S3sIGCWkQsWgv_1FV5aI';
+    cate.name = 'data/Categorias.xlsx';
+  let sto = new Object();
+    sto.id = '1mkDZ-DEiSeFNmZO8Xg7S8iVXNT_b3FBs';
+    sto.name = 'data/Stock.xlsx';
+  let vari = new Object();
+    vari.id = '1Sjyk4nymNDPs2dRQLm4LFNfkZMoUiajo';
+    vari.name = 'data/Varios.xlsx';
+
+  let exFiles = [ prod, cate, sto, vari ]
+
+  exFiles.forEach( item => {
+    let dest = fs.createWriteStream(item.name);
+    const drive = google.drive({version: 'v3', auth});
+    drive.files.get({
+      fileId: item.id,
+      alt: 'media'
+    }, {responseType: 'stream'},
+      function(err, res){
+          res.data
+          .on('end', () => {
+              console.log('Done');
+          })
+          .on('error', err => {
+              console.log('Error', err);
+          })
+          .pipe(dest);
+      }
+  );
+  })
+
 }
