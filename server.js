@@ -4,6 +4,9 @@ let app = express()
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
+let nodemailer = require('nodemailer');
+
+const body_parser = require('body-parser');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
@@ -11,6 +14,10 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
+
+
+// parse JSON (application/json content-type)
+app.use(body_parser.json());
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -77,11 +84,15 @@ app.get('/catalog/product/:productId', (req, res) => {
 
   let stock = parser.parseXls2Json('data/Stock.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
 
+  let cate = parser.parseXls2Json('data/Categorias.xlsx', { isNested: true })[0].filter( (row) => row.Id != "" );
+
   let some = parser.parseXls2Json('data/Varios.xlsx', { isNested: true });
 
   let teams = some[1].filter( (row) => row.Id != "" );
 
   let size = some[2].filter( (row) => row.Id != "" );
+
+  prod.IdCat = cate.find(element => prod.IdCat === element.Id);
 
   prod.IdEq = teams.find(element => prod.IdEq === element.Id);
 
@@ -90,7 +101,7 @@ app.get('/catalog/product/:productId', (req, res) => {
   prod.IdStock.forEach( (item) => {
     item.IdTalle = size.find(element => item.IdTalle === element.Id);
     if(!item.IdTalle){
-      item.IdTalle = new Object();
+      item.IdTalle = {};
       item.IdTalle.Id = 99999;
       item.IdTalle.Nombre = "Talle único";
     }
@@ -111,6 +122,53 @@ app.get('/catalog/teams', (req, res) => {
   let teams = parser.parseXls2Json('data/Varios.xlsx', { isNested: true })[1].filter( (row) => row.Id != "" );
 
   res.status(200).send(teams);
+
+})
+
+app.post('/catalog/order', (req, res) => {
+
+  let items = req.body.items;
+  let client = req.body.client;
+
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'fanaticosdev@gmail.com',
+      pass: 'Nicolas14'
+    }
+  });
+
+  let subject = 'Pedido Fanaticos Web ' + client.name + ' ' + client.surname;
+
+  let mail_body = "Productos: ";
+  let total = 0;
+
+  items.forEach((item) => {
+    let subtotal = (item.Precio * item.Cantidad);
+    mail_body = mail_body + "\n" + "Id: " + item.Id + ". Nombre: " + item.Nombre+ ". Categoria: " + item.IdCat.Nombre  +
+    ". Talle: " + item.IdStock.IdTalle.Nombre + ". Precio: $" + item.Precio + ". Cantidad: " + item.Cantidad + ". Subtotal: $" + subtotal;
+    total = total + subtotal;
+  });
+
+  mail_body = mail_body + "\n" + "Total: $" + total;
+
+  mail_body = mail_body + "\n" + "Cliente: " + client.name + " " + client.surname + ". Direccion: " +
+   client.address + ". Tel: " + client.tel + ". Mail: " + client.email + ". Contactar por: " + client.contactTo;
+
+  let mailOptions = {
+    from: 'fanaticosdev@gmail.com',
+    to: 'nicobuffa94@gmail.com, nico_buffa_94@hotmail.com',
+    subject: subject,
+    text: mail_body
+  };
+
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      res.status(500).send(error);
+    } else {
+      res.status(200).send("ok");
+    }
+  });
 
 })
 
@@ -179,16 +237,16 @@ function getAccessToken(oAuth2Client, callback) {
 
 function downloadFiles(auth) {
 
-  let prod = new Object();
+  let prod = {};
     prod.id = '1Ur0S8n8pApJ6SxhjsM5LFtKU3IL-TD6x';
     prod.name = 'data/Productos.xlsx';
-  let cate = new Object();
+  let cate = {};
     cate.id = '1Wpqj_LknYvR5S3sIGCWkQsWgv_1FV5aI';
     cate.name = 'data/Categorias.xlsx';
-  let sto = new Object();
+  let sto = {};
     sto.id = '1mkDZ-DEiSeFNmZO8Xg7S8iVXNT_b3FBs';
     sto.name = 'data/Stock.xlsx';
-  let vari = new Object();
+  let vari = {};
     vari.id = '1Sjyk4nymNDPs2dRQLm4LFNfkZMoUiajo';
     vari.name = 'data/Varios.xlsx';
 
