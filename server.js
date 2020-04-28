@@ -140,7 +140,7 @@ app.post('/catalog/order', (req, res) => {
 
   let subject = 'Pedido Fanaticos Web ' + client.name + ' ' + client.surname;
 
-  let mail_body = "Productos: ";
+  let mail_body = "Productos: \n";
   let total = 0;
 
   items.forEach((item) => {
@@ -150,14 +150,14 @@ app.post('/catalog/order', (req, res) => {
     total = total + subtotal;
   });
 
-  mail_body = mail_body + "\n" + "Total: $" + total;
+  mail_body = mail_body + "\n\n" + "Total: $" + total;
 
-  mail_body = mail_body + "\n" + "Cliente: " + client.name + " " + client.surname + ". Direccion: " +
+  mail_body = mail_body + "\n\n" + "Cliente: " + client.name + " " + client.surname + ". Direccion: " +
    client.address + ". Tel: " + client.tel + ". Mail: " + client.email + ". Contactar por: " + client.contactTo;
 
   let mailOptions = {
     from: 'fanaticosdev@gmail.com',
-    to: 'nicobuffa94@gmail.com, nico_buffa_94@hotmail.com',
+    to: 'nicobuffa94@gmail.com, hrbuffa@yahoo.com.ar',
     subject: subject,
     text: mail_body
   };
