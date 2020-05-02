@@ -71,6 +71,8 @@ app.get('/catalog/products/:categoryId', (req, res) => {
     item.Disponible = item.IdStock.filter( element => element.Cantidad > 0).length > 0;
   });
 
+  prod.sort((a, b) => (a.Nombre > b.Nombre) ? 1 : ((b.Nombre > a.Nombre ) ? -1 : 0));
+
   res.status(200).send(prod)
 })
 
@@ -120,6 +122,8 @@ app.get('/catalog/teams', (req, res) => {
   let parser = require('simple-excel-to-json');
 
   let teams = parser.parseXls2Json('data/Varios.xlsx', { isNested: true })[1].filter( (row) => row.Id != "" );
+
+  teams.sort((a, b) => (a.Nombre > b.Nombre) ? 1 : ((b.Nombre > a.Nombre ) ? -1 : 0));
 
   res.status(200).send(teams);
 
