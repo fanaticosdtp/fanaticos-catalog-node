@@ -161,7 +161,7 @@ app.post('/catalog/order', (req, res) => {
 
   let mailOptions = {
     from: 'fanaticosdev@gmail.com',
-    to: 'nicobuffa94@gmail.com, hrbuffa@yahoo.com.ar',
+    to: 'nicobuffa94@gmail.com, nico_buffa_94@hotmail.com',
     subject: subject,
     text: mail_body
   };
