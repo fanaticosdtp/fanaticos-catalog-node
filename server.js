@@ -177,6 +177,8 @@ app.post('/catalog/order', (req, res) => {
 })
 
 http.createServer(app).listen(8080, () => {
+    
+    console.log('Starting server at http://localhost:8080');
 
   // Load client secrets from a local file.
   fs.readFile('credentials.json', (err, content) => {
