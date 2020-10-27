@@ -176,7 +176,7 @@ app.post('/catalog/order', (req, res) => {
 
 })
 
-http.createServer(app).listen(8080, () => {
+http.createServer(app).listen(8080 || 5000, () => {
     
     console.log('Starting server at http://localhost:8080');
 
